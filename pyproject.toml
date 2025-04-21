@@ -10,7 +10,7 @@ dependencies = []
 
 [project.optional-dependencies]
 test = [
-    "anyio >= 4.9.0",
+    "anyio[trio] >= 4.9.0",
     "pytest >= 8.3.5",
 ]
 
