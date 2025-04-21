@@ -1,5 +1,5 @@
 import sys
-from contextlib import aclosing
+from contextlib import aclosing, asynccontextmanager
 
 import pytest
 from anyio.lowlevel import checkpoint
@@ -145,3 +145,21 @@ class TestAsyncGenerator:
         async with aclosing(genfunc()) as gen:
             async for _ in gen:
                 pass
+
+    async def test_asynccm_embedded_in_asyncgen(self) -> None:
+        @asynccontextmanager
+        async def asynccm():
+            # This accounts for the @asynccontextmanager
+            with set_yields_prevented(None):
+                # This would be a CancelScope
+                with set_yields_prevented("test", stacklevel=2):
+                    yield
+
+        async def bad_genfunc():
+            async with asynccm():
+                yield 1
+
+        with pytest.raises(RuntimeError, match="test"):
+            async with aclosing(bad_genfunc()) as gen:
+                async for _ in gen:
+                    pass
